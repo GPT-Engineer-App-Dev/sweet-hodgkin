@@ -12,20 +12,14 @@ const Index = () => {
 
     reader.onload = (e) => {
       const csvContent = e.target.result;
-      const data = parseCSV(csvContent);
+      const { data, uniqueProjectIds } = parseCSV(csvContent);
       const filteredData = data.filter((row) => row.type === "ai_update");
 
-      const uniqueProjectIds = filteredData.map((row) => {
-        const parts = row.path ? row.path.split("/") : [];
-        return parts.length > 1 ? parts[1] : "";
-      });
-
-      const uniqueIds = [...new Set(uniqueProjectIds)];
-      console.log("Unique Project IDs:", uniqueIds);
+      console.log("Unique Project IDs:", uniqueProjectIds);
 
       setCsvData(filteredData);
-      setUniqueProjectIds(uniqueIds);
-      console.log("Project IDs state:", uniqueIds);
+      setUniqueProjectIds(uniqueProjectIds.filter((id) => id));
+      console.log("Project IDs state:", uniqueProjectIds);
     };
 
     reader.readAsText(file);
@@ -43,7 +37,32 @@ const Index = () => {
       }, {});
     });
 
-    return data;
+    const parsedData = [];
+
+    data.forEach((row) => {
+      const rowData = header.reduce((obj, key, index) => {
+        obj[key] = row[index];
+        return obj;
+      }, {});
+
+      let projectId = "";
+      if (rowData.path) {
+        const pathParts = rowData.path.split("/");
+        if (pathParts.length > 1) {
+          projectId = pathParts[1];
+        }
+      }
+
+      console.log(`Raw path: ${rowData.path}, Extracted project ID: ${projectId}`);
+
+      if (projectId) {
+        parsedData.push(rowData);
+      }
+    });
+
+    const uniqueProjectIds = [...new Set(parsedData.map((row) => row.path.split("/")[1]).filter((id) => id))];
+
+    return { data: parsedData, uniqueProjectIds };
   };
 
   const handleProjectChange = (event) => {
