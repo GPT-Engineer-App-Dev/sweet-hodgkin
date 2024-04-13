@@ -34,16 +34,33 @@ const Index = () => {
   const parseCSV = (csvContent) => {
     const rows = csvContent.split("\n");
     const header = rows[0].split(",");
+    const pathColumnIndex = header.findIndex((column) => column === "path");
 
-    const data = rows.slice(1).map((row) => {
-      const values = row.split(",");
-      return header.reduce((obj, key, index) => {
-        obj[key] = values[index];
-        return obj;
-      }, {});
-    });
+    const parsedData = [];
 
-    return data;
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i].split(",");
+
+      if (pathColumnIndex !== -1 && row[pathColumnIndex]) {
+        const pathParts = row[pathColumnIndex].split("/");
+        const projectId = pathParts[1] || "";
+
+        if (!projectId) {
+          continue;
+        }
+
+        console.log(`Extracted project ID: ${projectId}`);
+
+        const rowData = header.reduce((obj, key, index) => {
+          obj[key] = row[index];
+          return obj;
+        }, {});
+
+        parsedData.push(rowData);
+      }
+    }
+
+    return parsedData;
   };
 
   const handleProjectChange = (event) => {
