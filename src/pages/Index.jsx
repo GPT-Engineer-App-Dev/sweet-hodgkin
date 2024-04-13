@@ -3,6 +3,7 @@ import { Box, Button, FormControl, FormLabel, Heading, Input, Link, List, ListIt
 
 const Index = () => {
   const [csvData, setCsvData] = useState([]);
+  const [uniqueProjectIds, setUniqueProjectIds] = useState([]);
   const [selectedProject, setSelectedProject] = useState("");
 
   const handleFileUpload = (event) => {
@@ -10,9 +11,10 @@ const Index = () => {
     const reader = new FileReader();
 
     reader.onload = (e) => {
-      const csvData = e.target.result;
-      const rows = csvData.split("\n");
+      const csvContent = e.target.result;
+      const rows = csvContent.split("\n");
       const header = rows[0].split(",");
+
       const data = rows.slice(1).map((row) => {
         const values = row.split(",");
         return header.reduce((obj, key, index) => {
@@ -22,18 +24,19 @@ const Index = () => {
       });
 
       const filteredData = data.filter((row) => row.type === "ai_update");
+
+      const uniqueProjectIds = filteredData.map((row) => {
+        const parts = row.path ? row.path.split("/") : [];
+        return parts.length > 1 ? parts[1] : "";
+      });
+
+      const uniqueIds = [...new Set(uniqueProjectIds)];
+
       setCsvData(filteredData);
+      setUniqueProjectIds(uniqueIds);
     };
 
     reader.readAsText(file);
-  };
-
-  const getUniqueProjectIds = () => {
-    const projectIds = csvData.map((row) => {
-      const projectId = row.path ? row.path.split("/")[0] : "";
-      return projectId;
-    });
-    return [...new Set(projectIds)];
   };
 
   const handleProjectChange = (event) => {
@@ -60,7 +63,7 @@ const Index = () => {
           <FormLabel>Select Project</FormLabel>
           <Select value={selectedProject} onChange={handleProjectChange}>
             <option value="">Select a project</option>
-            {getUniqueProjectIds().map((projectId) => (
+            {uniqueProjectIds.map((projectId) => (
               <option key={projectId} value={projectId}>
                 {projectId}
               </option>
@@ -74,22 +77,32 @@ const Index = () => {
           <Heading as="h2" size="lg" marginBottom="10px">
             Code Edits for Project: {selectedProject}
           </Heading>
-          <List spacing={3}>
-            {getFilteredEdits().map((edit) => (
-              <ListItem key={edit.id}>
-                <strong>Edit ID:</strong> {edit.id}
-                <br />
-                <strong>Commit SHA:</strong> {edit.commit_sha}
-                <br />
-                <Link href={`https://github.com/search?q=commit%3A${edit.commit_sha}&type=commits`} target="_blank" rel="noopener noreferrer">
-                  Search on GitHub
-                </Link>
-                <br />
-                <strong>Tags Output:</strong>
-                <pre>{JSON.stringify(JSON.parse(edit.tags.output), null, 2)}</pre>
-              </ListItem>
-            ))}
-          </List>
+          <table>
+            <thead>
+              <tr>
+                <th>Edit ID</th>
+                <th>Commit SHA</th>
+                <th>GitHub Link</th>
+                <th>Tags Output</th>
+              </tr>
+            </thead>
+            <tbody>
+              {getFilteredEdits().map((edit) => (
+                <tr key={edit.id}>
+                  <td>{edit.id}</td>
+                  <td>{edit.commit_sha}</td>
+                  <td>
+                    <Link href={`https://github.com/search?q=commit%3A${edit.commit_sha}&type=commits`} target="_blank" rel="noopener noreferrer">
+                      Search on GitHub
+                    </Link>
+                  </td>
+                  <td>
+                    <pre>{edit.tags && edit.tags.output ? JSON.stringify(JSON.parse(edit.tags.output), null, 2) : "Invalid JSON"}</pre>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </Box>
       )}
     </Box>
