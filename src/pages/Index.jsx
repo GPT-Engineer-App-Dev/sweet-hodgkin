@@ -21,8 +21,13 @@ const Index = () => {
         }, {});
       });
 
+      console.log("Parsed CSV data:", data);
+
       const filteredData = data.filter((row) => row.type === "ai_update");
       setCsvData(filteredData);
+
+      const uniqueProjectIds = getUniqueProjectIds();
+      console.log("Unique project IDs:", uniqueProjectIds);
     };
 
     reader.readAsText(file);
@@ -33,7 +38,9 @@ const Index = () => {
       const projectId = row.path ? row.path.split("/")[0] : "";
       return projectId;
     });
-    return [...new Set(projectIds)];
+    const uniqueProjectIds = [...new Set(projectIds)];
+    console.log("Unique project IDs in state:", uniqueProjectIds);
+    return uniqueProjectIds;
   };
 
   const handleProjectChange = (event) => {
@@ -59,6 +66,14 @@ const Index = () => {
         <FormControl marginBottom="20px">
           <FormLabel>Select Project</FormLabel>
           <Select value={selectedProject} onChange={handleProjectChange}>
+            {getUniqueProjectIds().map((projectId) => {
+              console.log("Rendering option for project ID:", projectId);
+              return (
+                <option key={projectId} value={projectId}>
+                  {projectId}
+                </option>
+              );
+            })}
             <option value="">Select a project</option>
             {getUniqueProjectIds().map((projectId) => (
               <option key={projectId} value={projectId}>
