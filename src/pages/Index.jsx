@@ -12,17 +12,7 @@ const Index = () => {
 
     reader.onload = (e) => {
       const csvContent = e.target.result;
-      const rows = csvContent.split("\n");
-      const header = rows[0].split(",");
-
-      const data = rows.slice(1).map((row) => {
-        const values = row.split(",");
-        return header.reduce((obj, key, index) => {
-          obj[key] = values[index];
-          return obj;
-        }, {});
-      });
-
+      const data = parseCSV(csvContent);
       const filteredData = data.filter((row) => row.type === "ai_update");
 
       const uniqueProjectIds = filteredData.map((row) => {
@@ -31,12 +21,29 @@ const Index = () => {
       });
 
       const uniqueIds = [...new Set(uniqueProjectIds)];
+      console.log("Unique Project IDs:", uniqueIds);
 
       setCsvData(filteredData);
       setUniqueProjectIds(uniqueIds);
+      console.log("Project IDs state:", uniqueIds);
     };
 
     reader.readAsText(file);
+  };
+
+  const parseCSV = (csvContent) => {
+    const rows = csvContent.split("\n");
+    const header = rows[0].split(",");
+
+    const data = rows.slice(1).map((row) => {
+      const values = row.split(",");
+      return header.reduce((obj, key, index) => {
+        obj[key] = values[index];
+        return obj;
+      }, {});
+    });
+
+    return data;
   };
 
   const handleProjectChange = (event) => {
@@ -63,6 +70,7 @@ const Index = () => {
           <FormLabel>Select Project</FormLabel>
           <Select value={selectedProject} onChange={handleProjectChange}>
             <option value="">Select a project</option>
+            {console.log("Project IDs in Select:", uniqueProjectIds)}
             {uniqueProjectIds.map((projectId) => (
               <option key={projectId} value={projectId}>
                 {projectId}
