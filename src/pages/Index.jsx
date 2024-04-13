@@ -29,7 +29,10 @@ const Index = () => {
   };
 
   const getUniqueProjectIds = () => {
-    const projectIds = csvData.map((row) => row.path.split("/")[0]);
+    const projectIds = csvData.map((row) => {
+      const projectId = row.path ? row.path.split("/")[0] : "";
+      return projectId;
+    });
     return [...new Set(projectIds)];
   };
 
